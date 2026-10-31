@@ -1,0 +1,10 @@
+# Local Supabase Auth defaults. Apply the equivalent setting in the hosted project too.
+[auth]
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
+
+[functions.push-notifications]
+verify_jwt = false

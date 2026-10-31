@@ -1,0 +1,10 @@
+# Supabase setup
+
+1. Copy `.env.example` to `.env.local` and set the project URL and publishable key. The browser client intentionally accepts only the publishable/anon key; never place a `service_role` or secret key in a `VITE_` variable.
+2. The verified Phase 6 project should already have `migrations/20261101000000_initial_skin_diary_schema.sql`. Review and apply only `migrations/20261102000000_routines_calendar.sql` to the existing My Skin Diary development project through Supabase SQL Editor. If the initial migration is not present, apply it first. The second migration adds ISO active weekdays, links each completion to at most one usage log, installs authenticated, RLS-aware RPCs for completion and ordering, and reloads the PostgREST schema cache.
+3. The local Supabase Auth config disables new email/public sign-ups. Hosted projects must also have **Authentication → Settings → Allow new users to sign up** disabled; this repository cannot change hosted project settings by itself.
+4. Create an existing user through the Supabase dashboard or an administrative provisioning workflow, then sign in through `/login`. This app has no public registration route or sign-up action.
+
+Product CRUD queries include the signed-in user's `user_id` and rely on the migration's authenticated-only grants and per-user RLS policies as the security boundary. The frontend check is only navigation UX; the database policies enforce isolation.
+
+Routine/calendar database assertions are in `tests/routine_calendar.test.sql` for a pgTAP-capable database test runner. No local Supabase stack is required for this project. Browser verification in the signed-in My Skin Diary development app: create both routine kinds, add/reorder a product, change active weekdays and reminder time, complete/uncheck a step, then confirm one linked row appears/disappears in `usage_logs` and its activity appears/disappears on the matching calendar date. Calendar note creation should appear in both the selected day and `usage_logs` with `activity_type = 'skin_note'`.
