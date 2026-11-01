@@ -144,6 +144,7 @@
 .product-grid--loading .skeleton--line-title { margin-top: 4px; }
 .collection-empty { margin-top: 15px; }
 .empty-card { display: grid; justify-items: center; padding: 28px 19px; color: #76505A; text-align: center; }
+.product-grid--dashboard > .empty-card { grid-column: 1 / -1; width: 100%; min-height: 205px; align-content: center; }
 .empty-card p { margin: 7px 0 13px; color: var(--color-muted); font-size: 11px; }
 .empty-card h2 { margin: 12px 0 0; color: var(--color-text); font-family: Georgia, serif; font-size: 20px; font-weight: 400; }
 .empty-card__icon { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 50%; background: var(--color-soft-pink); }
@@ -544,6 +545,28 @@
 .routine-card .dashboard-message p { margin: 0 0 8px; }
 
 @media (max-width: 520px) {
+  .section-title { align-items: flex-start; gap: 8px; }
+  .section-title > div:first-child { min-width: 0; }
+  .section-title__action { flex: 0 0 auto; white-space: nowrap; }
+  .section-title__action .text-link { white-space: nowrap; }
+  .dashboard-hero { min-height: 230px; padding: 22px 19px; }
+  .dashboard-hero__copy { max-width: 76%; }
+  .dashboard-hero__illustration { width: 35%; opacity: .82; }
+  .dashboard-hero__sun { top: 43%; right: 7%; width: 76px; height: 76px; }
+  .dashboard-hero__flower { top: 70%; right: 49%; font-size: 35px; }
+  .dashboard-hero__leaf { top: 20%; right: 9%; width: 29px; height: 29px; }
+  .collection-controls { align-items: stretch; }
+  .collection-controls__search { min-width: 0; }
+  .collection-controls > .button { flex: 0 0 auto; }
+  .collection-results { align-items: stretch; flex-direction: column; gap: 9px; }
+  .collection-filters-extra { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 8px; }
+  .collection-sort { min-width: 0; display: grid; gap: 4px; }
+  .collection-sort select { width: 100%; max-width: none; min-height: 38px; padding: 0 9px; font-size: 10px; }
+  .collection-sort:last-child { grid-column: 1 / -1; }
+  .collection-empty { min-height: 240px; align-content: center; padding: 28px 22px; }
+  .collection-summary { gap: 9px; padding: 13px; }
+  .collection-summary__copy { min-width: 0; }
+  .collection-summary__copy span { line-height: 1.4; }
   .calendar-card__header { align-items: flex-start; flex-direction: column; }
   .calendar-card__controls { width: 100%; justify-content: space-between; gap: 4px; }
   .calendar-view-toggle { margin-right: auto; }
