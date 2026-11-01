@@ -43,6 +43,7 @@ a { color: inherit; text-decoration: none; }
 .topbar__crumb { gap: 9px; color: var(--color-muted); font-size: 12px; }
 .topbar__crumb strong { color: var(--color-text); font-weight: 600; }
 .topbar__actions { gap: 14px; }
+.offline-sync-status { display: inline-flex; align-items: center; gap: 6px; padding: 7px 9px; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-muted); background: var(--color-surface); font: inherit; font-size: 11px; cursor: pointer; }
 .topbar__date { display: none; align-items: center; gap: 8px; color: var(--color-muted); font-size: 12px; }
 .icon-button { position: relative; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid var(--color-border); border-radius: 50%; color: var(--color-text); background: var(--color-surface); cursor: pointer; transition: background .18s, border-color .18s; }
 .icon-button:hover { border-color: var(--color-primary); background: #FFFCFB; }
@@ -178,12 +179,12 @@ a { color: inherit; text-decoration: none; }
 .demo-card--dropdown { padding: 20px; }
 .demo-card--dropdown > .field__message { margin-top: 9px; }
 .modal-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; overflow-y: auto; place-items: center; padding: 18px; background: rgba(54, 39, 44, .36); backdrop-filter: blur(5px); }
-.modal { width: min(100%, 460px); max-height: min(88vh, 720px); overflow: auto; border: 1px solid rgba(255, 255, 255, .8); border-radius: 24px; background: #FFFCFB; box-shadow: 0 24px 70px rgba(52, 34, 40, .24); }
+.modal { display: flex; width: min(100%, 460px); max-height: min(88vh, 720px); max-height: min(88dvh, 720px); min-height: 0; flex-direction: column; overflow: hidden; border: 1px solid rgba(255, 255, 255, .8); border-radius: 24px; background: #FFFCFB; box-shadow: 0 24px 70px rgba(52, 34, 40, .24); }
 .modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 21px 21px 0; }
 .modal__title { margin: 0; color: var(--color-text); font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 400; letter-spacing: -.025em; }
 .modal__description { max-width: 350px; margin: 7px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; }
-.modal__content { padding: 19px 21px; color: var(--color-text); font-size: 12px; line-height: 1.6; }
-.modal__footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 21px 20px; }
+.modal__content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 19px 21px; color: var(--color-text); font-size: 12px; line-height: 1.6; }
+.modal__footer { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 21px 20px; }
 .modal-note { display: flex; align-items: flex-start; gap: 11px; padding: 13px; border: 1px solid #F2E1DF; border-radius: 15px; background: #FFF7F4; }
 .modal-note__icon { display: grid; width: 35px; height: 35px; flex: 0 0 auto; place-items: center; border-radius: 12px; color: #835763; background: var(--color-cream); }
 .modal-note p { margin: 0; color: #655159; }
@@ -248,6 +249,11 @@ a { color: inherit; text-decoration: none; }
   .swatch__color { min-height: 73px; }
   .page-footer { flex-direction: row; justify-content: space-between; }
   .toast-viewport { right: 22px; left: auto; justify-items: end; }
+}
+
+@media (max-width: 519px) {
+  .offline-sync-status { width: 34px; height: 34px; justify-content: center; padding: 0; }
+  .offline-sync-status span { display: none; }
 }
 
 @media (min-width: 760px) {

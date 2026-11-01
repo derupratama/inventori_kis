@@ -19,7 +19,7 @@ export function OfflineSyncStatus() {
     void refresh()
     return () => { active = false; window.removeEventListener('online', refresh); window.removeEventListener('offline', refresh); window.removeEventListener('diary:offline-queue-changed', syncDone) }
   }, [user])
-  return <button type="button" onClick={() => window.dispatchEvent(new Event('diary:sync-offline'))} title={pending ? `${pending} perubahan menunggu sinkronisasi` : online ? 'Data tersinkron' : 'Mode offline'} aria-label={pending ? `${pending} perubahan menunggu sinkronisasi` : online ? 'Data tersinkron' : 'Mode offline'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 0, background: 'transparent', color: 'inherit', font: 'inherit', cursor: 'pointer' }}>
+  return <button className="offline-sync-status" type="button" onClick={() => window.dispatchEvent(new Event('diary:sync-offline'))} title={pending ? `${pending} perubahan menunggu sinkronisasi` : online ? 'Data tersinkron' : 'Mode offline'} aria-label={pending ? `${pending} perubahan menunggu sinkronisasi` : online ? 'Data tersinkron' : 'Mode offline'}>
     {!online ? <CloudOff size={15} aria-hidden="true" /> : pending ? <RefreshCw size={15} aria-hidden="true" /> : <Cloud size={15} aria-hidden="true" />}
     <span>{!online ? 'Offline' : pending ? `${pending} menunggu` : 'Tersinkron'}</span>
   </button>

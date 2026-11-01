@@ -583,7 +583,7 @@
 
 /* Product details, private photos, review, and usage summary */
 .product-editor-modal { width: min(720px, calc(100vw - 28px)); }
-.product-editor-modal .modal__content { max-height: min(72vh, 760px); overflow-y: auto; }
+.product-editor-modal .modal__content { max-height: none; flex: 1 1 auto; }
 .product-form h3 { margin: 12px 0 -4px; color: var(--color-ink, #533942); font-size: 15px; }
 .product-form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .product-form select, .product-form textarea, .product-review-form textarea, .routine-name-edit input { width: 100%; min-height: 42px; border: 1px solid #ead6db; border-radius: 12px; padding: 10px 12px; background: #fff; color: inherit; font: inherit; }
@@ -718,8 +718,8 @@
 .routine-checklist-card__actions .button { min-width: 148px; min-height: 40px; border-radius: 13px; font-size: 11px; font-weight: 650; }
 .routine-checklist-card__actions .button--outline { border-color: #e8c5d0; background: #fff9fb; color: #8f4d65; }
 .routine-checklist-card__actions .button--secondary { border: 1px solid #e7bfd0; background: #fbe9ef; color: #81455c; }
-.routine-schedule-modal { max-height: min(88vh, 820px); }
-.routine-schedule-modal .modal__content { overflow-y: auto; }
+.routine-schedule-modal { max-height: min(88vh, 820px); max-height: min(88dvh, 820px); }
+.routine-schedule-modal .modal__content { flex: 1 1 auto; }
 .routine-schedule-modal__day-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; }
 .routine-schedule-modal__day-picker button { min-height: 42px; border: 1px solid #eadde1; border-radius: 13px; color: #755e65; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .16s ease, border-color .16s ease, transform .16s ease; }
 .routine-schedule-modal__day-picker button:hover { border-color: #d99bac; transform: translateY(-1px); }
