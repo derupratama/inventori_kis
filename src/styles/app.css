@@ -465,6 +465,8 @@
 /* Authentication */
 .auth-screen { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: radial-gradient(ellipse at top, #FCE4E8 0, #FFF8F7 58%); }
 .auth-card { width: min(100%, 420px); padding: 30px; border: 1px solid #F0E4E3; border-radius: 26px; background: rgba(255,255,255,.94); box-shadow: 0 18px 50px rgba(94,55,66,.1); }
+.auth-brand { display: flex; align-items: center; gap: 10px; }
+.auth-brand img { width: 42px; height: 42px; border-radius: 14px; }
 .auth-card__eyebrow { color: #875C66; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .auth-card h1 { margin: 12px 0 8px; font-family: Georgia, serif; font-size: 30px; font-weight: 400; }
 .auth-card > p { margin: 0 0 22px; color: #756168; font-size: 13px; line-height: 1.6; }
@@ -511,8 +513,11 @@
 .routine-step__copy > strong { color: #49363C; font-size: 10px; font-weight: 650; }
 .routine-step__copy > strong a { color: inherit; }
 .routine-step__copy > strong a:hover { color: #85535F; }
-.routine-step__manage { display: flex; flex: 0 0 auto; gap: 0; }
-.routine-step__manage .button--icon { width: 29px; min-width: 29px; height: 29px; color: #735A61; }
+.routine-step__manage { position: relative; display: flex; flex: 0 0 auto; }
+.routine-step__manage > .button--icon { width: 34px; min-width: 34px; height: 34px; color: #735A61; }
+.routine-step__manage-menu { position: absolute; z-index: 12; top: calc(100% + 3px); right: 0; display: grid; width: 158px; gap: 2px; padding: 5px; border: 1px solid #F0DEDF; border-radius: 13px; background: #FFFFFF; box-shadow: 0 9px 24px rgba(73, 54, 60, .15); }
+.routine-step__manage-menu .button { min-height: 36px; justify-content: flex-start; padding: 0 10px; border-radius: 9px; font-size: 10px; }
+.routine-step__manage-menu .button:last-child { color: #9C5364; }
 .routine-step__check input:disabled { cursor: not-allowed; }
 .routine-step__check:has(input:disabled) { cursor: not-allowed; opacity: .55; }
 .routine-no-items { padding: 16px 8px; color: #756168; font-size: 10px; }
@@ -681,8 +686,29 @@
 .routine-schedule-modal__note svg { flex: 0 0 auto; color: #ba758b; }
 .routine-checklist-card__actions .button { min-width: 138px; }
 @media (max-width: 640px) {
-  .routine-page-heading-actions { align-items: flex-start; flex-direction: column-reverse; gap: 7px; }
-  .routine-page-heading-actions .button { min-height: 38px; }
+  .routine-page-heading-actions { width: 100%; align-items: center; justify-content: space-between; flex-direction: row; gap: 8px; }
+  .routine-page-heading-actions .button { min-height: 40px; padding: 0 13px; font-size: 11px; }
+  .routine-overview { flex-wrap: nowrap; gap: 10px; padding: 14px; }
+  .routine-overview h2 { font-size: 17px; }
+  .routine-overview p { display: none; }
+  .routine-tabs { gap: 6px; margin-bottom: 10px; }
+  .routine-tab { min-height: 44px; font-size: 11px; }
+  .routine-checklist-card .card__content { padding: 14px; }
+  .routine-checklist-card__header { align-items: center; gap: 8px; }
+  .routine-checklist-card__header > div { min-width: 0; flex: 1; }
+  .routine-checklist-card__header h2 { font-size: 18px; }
+  .routine-checklist-card__header .badge { min-height: 23px; padding: 0 8px; font-size: 8px; }
+  .routine-checklist-card__actions { flex: 0 0 auto; gap: 0; }
+  .routine-checklist-card__actions .progress-ring { display: none; }
+  .routine-checklist-card__actions .button { min-width: 0; min-height: 36px; padding: 0 10px; border-radius: 12px; font-size: 9px; }
+  .routine-step { min-height: 72px; gap: 7px; padding: 7px 2px; }
+  .routine-step__number { display: none; }
+  .routine-step__check { width: 38px; height: 38px; }
+  .routine-step__check input { width: 38px; height: 38px; }
+  .routine-step__custom { width: 24px; height: 24px; border-radius: 8px; }
+  .routine-step__copy > strong { font-size: 11px; }
+  .routine-step__copy p { font-size: 10px; line-height: 1.4; }
+  .routine-aside { display: none; }
   .routine-schedule-modal__sections { grid-template-columns: 1fr; }
   .routine-schedule-modal__section { padding: 13px; }
   .routine-schedule-modal__days { gap: 7px; }

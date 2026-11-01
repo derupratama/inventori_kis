@@ -11,6 +11,7 @@ import {
   Badge, BottomNavigation, Button, Card, Dropdown, Input, LoadingSkeleton,
   Modal, Sidebar, useToast,
 } from '../components/index.js'
+import { BrandMark } from '../components/navigation/BrandMark.jsx'
 
 const navigation = [
   { key: 'overview', label: 'Ringkasan', icon: Home, href: '/' },
@@ -200,7 +201,7 @@ function ShowcasePage() {
               <SectionHeading number="09" headingId="sidebar-title" title="Navigasi" description="Sidebar untuk desktop, bottom navigation untuk layar kecil." />
               <Card className="demo-card nav-demo-card">
                 <div className="nav-mini-sidebar" aria-label="Contoh tampilan sidebar">
-                  <span className="nav-mini-sidebar__brand"><span className="brand-mark brand-mark--mini"><Heart size={14} /></span> my skin diary</span>
+                  <span className="nav-mini-sidebar__brand"><span className="brand-mark brand-mark--mini"><BrandMark /></span> my skin diary</span>
                   <span className="nav-mini-sidebar__active"><Home size={15} /> Ringkasan <ArrowDownRight size={13} className="nav-mini-sidebar__arrow" /></span>
                   <span className="nav-mini-sidebar__item"><BookHeart size={15} /> Jurnal kulit</span>
                   <span className="nav-mini-sidebar__item"><Droplets size={15} /> Rutinitas</span>

@@ -1,11 +1,12 @@
-import { Flower2, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { BrandMark } from './BrandMark.jsx'
 
 export function Sidebar({ items, activeKey, onNavigate, onLogout, profile, brandName = 'my skin diary' }) {
   return (
     <aside className="sidebar" aria-label="Sidebar aplikasi">
       <Link to="/" className="brand-lockup" aria-label={`${brandName}, beranda`}>
-        <span className="brand-mark"><Flower2 size={21} aria-hidden="true" /></span>
+        <span className="brand-mark"><BrandMark /></span>
         <span className="brand-name">{brandName}</span>
       </Link>
       <p className="sidebar__eyebrow">MENU</p>

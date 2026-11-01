@@ -4,6 +4,7 @@ import { diaryDateKey, diaryMonthKey, monthDateRange } from '../../lib/diary-dat
 import { createRoutineApi, defaultNotificationPreferences } from '../../lib/routine-api.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { withTimeout } from '../../lib/async.js'
+import { enqueueOfflineChange, pendingOfflineChanges, readSnapshot, removeOfflineChange, writeSnapshot } from '../../lib/offline-store.js'
 
 const RoutineCalendarContext = createContext(null)
 const routineApi = supabase ? createRoutineApi(supabase) : null
@@ -36,7 +37,14 @@ export function RoutineCalendarProvider({ children }) {
       return
     }
     if (!routineApi) { setError('Supabase belum dikonfigurasi.'); setLoading(false); return }
-    setLoading(true); setError('')
+    let hasSnapshot = false
+    try {
+      const cached = await readSnapshot(user.id, 'routine-calendar')
+      if (version !== requestVersion.current) return
+      if (cached) { setRoutines(cached.routines); setItems(cached.items); setPreferences(cached.preferences); setCompletedItemIds(cached.completedItemIds); setActivities(cached.activities); setActivityMonth(cached.activityMonth); hasSnapshot = true }
+    } catch { /* Continue with the server when local storage is unavailable. */ }
+    if (!navigator.onLine) { setLoading(false); setError(hasSnapshot ? '' : 'Belum ada data rutinitas tersimpan. Buka aplikasi saat online untuk menyiapkannya.'); return }
+    setLoading(!hasSnapshot); setError('')
     try {
       const result = await withTimeout(routineApi.load(user.id), 'Rutinitas memerlukan waktu terlalu lama untuk dimuat. Periksa koneksi lalu coba lagi.')
       if (version !== requestVersion.current) return
@@ -56,11 +64,33 @@ export function RoutineCalendarProvider({ children }) {
       setCompletedItemIds(completed.map(({ routine_item_id: id }) => id))
       setActivityMonth(monthActivities.month)
       setActivities(monthActivities.rows)
+      void writeSnapshot(user.id, 'routine-calendar', { routines: result.routines, items: result.items, preferences: result.preferences, completedItemIds: completed.map(({ routine_item_id: id }) => id), activities: monthActivities.rows, activityMonth: monthActivities.month })
     } catch (loadError) { if (version === requestVersion.current) setError(loadError.message || 'Data rutinitas belum dapat dimuat.') }
     finally { if (version === requestVersion.current) setLoading(false) }
   }, [user])
 
   useEffect(() => { void load(); return () => { requestVersion.current += 1 } }, [load])
+  useEffect(() => {
+    if (user && loadedUserId.current === user.id && !loading) void writeSnapshot(user.id, 'routine-calendar', { routines, items, preferences, completedItemIds, activities, activityMonth })
+  }, [user, loading, routines, items, preferences, completedItemIds, activities, activityMonth])
+
+  const syncOffline = useCallback(async () => {
+    if (!user || !routineApi || !navigator.onLine) return
+    const queue = await pendingOfflineChanges(user.id)
+    for (const entry of queue) {
+      if (entry.type === 'routine:completion') await routineApi.setCompletion(user.id, entry.payload.itemId, entry.payload.date, entry.payload.complete)
+      else if (entry.type === 'routine:skin-note') await routineApi.addSkinNote(user.id, entry.payload.date, entry.payload.note, entry.payload.id)
+      else if (entry.type === 'routine:delete-skin-note') await routineApi.deleteSkinNote(user.id, entry.payload.id)
+      else continue
+      await removeOfflineChange(entry.id)
+    }
+    if (queue.length) window.dispatchEvent(new Event('diary:offline-queue-changed'))
+  }, [user])
+  useEffect(() => {
+    const sync = () => { void syncOffline().catch((syncError) => console.warn('Offline routine sync paused', syncError)) }
+    window.addEventListener('online', sync); window.addEventListener('diary:sync-offline', sync); sync()
+    return () => { window.removeEventListener('online', sync); window.removeEventListener('diary:sync-offline', sync) }
+  }, [syncOffline])
   useEffect(() => {
     const refreshAfterProductRemoval = () => { void load() }
     window.addEventListener('diary:products-changed', refreshAfterProductRemoval)
@@ -150,6 +180,10 @@ export function RoutineCalendarProvider({ children }) {
 
   const loadActivities = useCallback(async (month) => {
     if (!user || !routineApi) return
+    if (!navigator.onLine) {
+      if (activityMonth === month) return activities
+      throw new Error('Riwayat bulan ini belum tersimpan di perangkat. Buka bulan tersebut saat online terlebih dahulu.')
+    }
     const request = ++activityRequest.current
     const range = monthDateRange(month)
     setCalendarLoading(true)
@@ -159,7 +193,7 @@ export function RoutineCalendarProvider({ children }) {
       if (request === activityRequest.current && loadedUserId.current === user.id) { setActivities(rows); setActivityMonth(month) }
     } catch (loadError) { if (request === activityRequest.current) setError(loadError.message || 'Aktivitas kalender belum dapat dimuat.'); throw loadError }
     finally { if (request === activityRequest.current) setCalendarLoading(false) }
-  }, [user])
+  }, [user, activityMonth, activities])
 
   const loadActivityRange = useCallback(async (from, to) => {
     if (!user || !routineApi) return []
@@ -168,25 +202,44 @@ export function RoutineCalendarProvider({ children }) {
 
   const setCompletion = useCallback(async (itemId, complete, date = diaryDateKey()) => {
     if (!user || !routineApi) throw new Error('Sesi pengguna atau konfigurasi Supabase tidak tersedia.')
-    await withTimeout(routineApi.setCompletion(user.id, itemId, date, complete), 'Checklist terlalu lama untuk disimpan. Periksa koneksi lalu coba lagi.')
+    try { await withTimeout(routineApi.setCompletion(user.id, itemId, date, complete), 'Checklist terlalu lama untuk disimpan. Periksa koneksi lalu coba lagi.') }
+    catch (error) {
+      if (navigator.onLine) throw error
+      await enqueueOfflineChange(user.id, 'routine:completion', { itemId, date, complete })
+      window.dispatchEvent(new Event('diary:offline-queue-changed'))
+    }
     setCompletedItemIds((current) => complete
       ? (current.includes(itemId) ? current : [...current, itemId])
       : current.filter((id) => id !== itemId))
-    await loadActivities(date.slice(0, 7))
+    if (navigator.onLine) await loadActivities(date.slice(0, 7))
   }, [user, loadActivities])
 
   const addSkinNote = useCallback(async (date, note) => {
     if (!user || !routineApi) throw new Error('Sesi pengguna atau konfigurasi Supabase tidak tersedia.')
-    const row = await withTimeout(routineApi.addSkinNote(user.id, date, note), 'Catatan kulit terlalu lama untuk disimpan. Coba lagi.')
+    let row
+    try { row = await withTimeout(routineApi.addSkinNote(user.id, date, note), 'Catatan kulit terlalu lama untuk disimpan. Coba lagi.') }
+    catch (error) {
+      if (navigator.onLine) throw error
+      row = { id: crypto.randomUUID(), user_id: user.id, activity_type: 'skin_note', activity_date: date, occurred_at: new Date().toISOString(), mood: 'Catatan kulit', notes: note }
+      await enqueueOfflineChange(user.id, 'routine:skin-note', { id: row.id, date, note })
+      window.dispatchEvent(new Event('diary:offline-queue-changed'))
+    }
     const month = date.slice(0, 7)
-    if (activityMonth === month) setActivities((current) => [...current.filter((item) => item.id !== row.id), row])
-    else await loadActivities(month)
+    if (activityMonth === month || !navigator.onLine) {
+      setActivityMonth(month)
+      setActivities((current) => [...current.filter((item) => item.id !== row.id), row])
+    } else await loadActivities(month)
     return row
   }, [user, activityMonth, loadActivities])
 
   const deleteSkinNote = useCallback(async (activityId) => {
     if (!user || !routineApi) throw new Error('Sesi pengguna atau konfigurasi Supabase tidak tersedia.')
-    await withTimeout(routineApi.deleteSkinNote(user.id, activityId), 'Penghapusan catatan terlalu lama. Coba lagi.')
+    try { await withTimeout(routineApi.deleteSkinNote(user.id, activityId), 'Penghapusan catatan terlalu lama. Coba lagi.') }
+    catch (error) {
+      if (navigator.onLine) throw error
+      await enqueueOfflineChange(user.id, 'routine:delete-skin-note', { id: activityId })
+      window.dispatchEvent(new Event('diary:offline-queue-changed'))
+    }
     setActivities((current) => current.filter((activity) => activity.id !== activityId))
   }, [user])
 

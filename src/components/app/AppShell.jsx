@@ -5,6 +5,7 @@ import { RouteErrorBoundary } from './RouteErrorBoundary.jsx'
 import { mockProfile } from '../../data/profile.js'
 import { BottomNavigation, Sidebar, useToast } from '../index.js'
 import { useAuth } from '../auth/AuthProvider.jsx'
+import { OfflineSyncStatus } from './OfflineSyncStatus.jsx'
 
 const icons = { Home, CalendarDays, PackageOpen, Droplets, Settings2 }
 
@@ -32,6 +33,7 @@ export function AppShell() {
         <header className="topbar">
           <div className="topbar__crumb"><span>My Skin Diary</span><span className="topbar__crumb-divider">/</span><strong>{location.pathname === '/usage-summary' ? 'Ringkasan Pemakaian' : appNavigation.find((item) => item.key === activeKey)?.label ?? 'Dashboard'}</strong></div>
           <div className="topbar__actions">
+            <OfflineSyncStatus />
             <span className="topbar__date"><CalendarDays size={15} aria-hidden="true" /> Hari ini, catat dengan lembut</span>
             <button className="icon-button topbar__notification" type="button" aria-label="Notifikasi" onClick={() => showToast('Kamu sudah melihat semua notifikasi.', { tone: 'info' })}>
               <Bell size={18} aria-hidden="true" />

@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const { showToast } = useToast()
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+  const [pushPermissionBlocked, setPushPermissionBlocked] = useState(() => pushSupport().supported && Notification.permission === 'denied')
   const [installPrompt, setInstallPrompt] = useState(() => window.deferredPwaInstallPrompt ?? null)
   const [installed, setInstalled] = useState(false)
   const pushAvailability = pushSupport()
@@ -50,13 +51,22 @@ export default function SettingsPage() {
 
   async function togglePush() {
     if (!user) return
+    if (!pushEnabled && pushSupport().supported && Notification.permission === 'denied') {
+      setPushPermissionBlocked(true)
+      showToast('Izin notifikasi diblokir. Buka pengaturan situs di browser HP, izinkan Notifikasi, lalu coba lagi.', { tone: 'error' })
+      return
+    }
     setPushBusy(true)
     try {
       if (pushEnabled) await unsubscribeFromPush(user.id)
       else await subscribeToPush(user.id)
       setPushEnabled(!pushEnabled)
+      setPushPermissionBlocked(Notification.permission === 'denied')
       showToast(pushEnabled ? 'Notifikasi push dinonaktifkan.' : 'Notifikasi push diaktifkan.')
-    } catch (error) { showToast(error.message || 'Pengaturan push belum dapat diperbarui.', { tone: 'error' }) }
+    } catch (error) {
+      setPushPermissionBlocked(pushSupport().supported && Notification.permission === 'denied')
+      showToast(error.message || 'Pengaturan push belum dapat diperbarui.', { tone: 'error' })
+    }
     finally { setPushBusy(false) }
   }
 
@@ -197,7 +207,8 @@ export default function SettingsPage() {
             <div className="settings-actions push-notification-actions"><Button type="button" variant={pushEnabled ? 'outline' : 'primary'} loading={pushBusy} disabled={!pushAvailability.supported || (!pushEnabled && !vapidKeyConfigured)} onClick={togglePush}>{pushEnabled ? 'Matikan notifikasi di perangkat ini' : vapidKeyConfigured ? 'Aktifkan notifikasi di perangkat ini' : 'Notifikasi belum dikonfigurasi'}</Button></div>
             {!pushAvailability.secure && <p className="dashboard-message">Push memerlukan HTTPS. localhost dapat digunakan saat pengembangan.</p>}
             {pushAvailability.secure && !pushAvailability.supported && <p className="dashboard-message">Browser ini belum mendukung Web Push.</p>}
-            {pushAvailability.supported && !vapidKeyConfigured && <p className="push-config-message">Push belum siap: kunci publik VAPID belum ada di <code>.env.local</code>. Pengiriman juga memerlukan pasangan kunci privat di Supabase Edge Function secrets.</p>}
+            {pushPermissionBlocked && <p className="push-config-message">Izin notifikasi diblokir oleh browser. Buka pengaturan situs dari menu atau ikon di bilah alamat browser HP, ubah Notifikasi menjadi Izinkan, lalu muat ulang halaman ini.</p>}
+            {pushAvailability.supported && !vapidKeyConfigured && <p className="push-config-message">Push belum siap: build aplikasi ini belum menerima <code>VITE_VAPID_PUBLIC_KEY</code>. Di Vercel, pastikan variabel tersedia untuk environment deployment ini lalu redeploy. Kunci privat VAPID harus tetap berada di Supabase Edge Function Secrets.</p>}
           </Card>
 
           <Card className="settings-card">

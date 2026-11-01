@@ -114,9 +114,9 @@ export function createRoutineApi(client) {
     async activitiesForRange(userId, from, to) {
       return unwrap(client.from('usage_logs').select('*').eq('user_id', userId).gte('activity_date', from).lte('activity_date', to).order('occurred_at'))
     },
-    async addSkinNote(userId, date, note) {
+    async addSkinNote(userId, date, note, id) {
       return unwrap(client.from('usage_logs').insert({
-        user_id: userId, activity_type: 'skin_note', activity_date: date,
+        ...(id ? { id } : {}), user_id: userId, activity_type: 'skin_note', activity_date: date,
         occurred_at: new Date().toISOString(), mood: 'Catatan kulit', notes: note,
       }).select('*').single())
     },

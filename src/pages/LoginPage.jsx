@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Button, Card, Input } from '../components/index.js'
 import { useAuth } from '../components/auth/AuthProvider.jsx'
+import { BrandMark } from '../components/navigation/BrandMark.jsx'
 
 export default function LoginPage() {
   const { user, loading, signIn, error: configError } = useAuth()
@@ -25,7 +26,7 @@ export default function LoginPage() {
   return (
     <main className="auth-screen">
       <Card className="auth-card">
-        <span className="auth-card__eyebrow">My Skin Diary</span>
+        <div className="auth-brand"><BrandMark /><span className="auth-card__eyebrow">My Skin Diary</span></div>
         <h1>Selamat datang kembali</h1>
         <p>Masuk untuk melanjutkan catatan perawatan kulitmu.</p>
         {configError && <p className="auth-message auth-message--error" role="alert">{configError}</p>}

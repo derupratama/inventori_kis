@@ -136,10 +136,10 @@ export function createProductsApi(client) {
       const rows = await unwrap(client.from('products').select('*').eq('user_id', userId).order('expires_on', { ascending: true, nullsFirst: false }))
       return rows.map(mapProduct)
     },
-    async create(userId, values) {
+    async create(userId, values, id = globalThis.crypto.randomUUID()) {
       const imagePath = await uploadPhoto(userId, values.photo)
       let row
-      try { row = await unwrap(client.from('products').insert({ ...productPayload(values, userId), image_path: imagePath }).select('*').single()) }
+      try { row = await unwrap(client.from('products').insert({ id, ...productPayload(values, userId), image_path: imagePath }).select('*').single()) }
       catch (error) { removePhoto(imagePath); throw error }
       return mapProduct(row)
     },
