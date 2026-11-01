@@ -4,6 +4,7 @@ import { createProductsApi, mapProduct, productPayload } from '../../lib/product
 import { supabase } from '../../lib/supabaseClient.js'
 import { withTimeout } from '../../lib/async.js'
 import { enqueueOfflineChange, pendingOfflineChanges, readSnapshot, removeOfflineChange, writeSnapshot } from '../../lib/offline-store.js'
+import { createUuid } from '../../lib/uuid.js'
 
 const ProductsContext = createContext(null)
 const productsApi = supabase ? createProductsApi(supabase) : null
@@ -70,7 +71,7 @@ export function ProductsProvider({ children }) {
     try { product = await withTimeout(productsApi.create(user.id, values), 'Penyimpanan produk terlalu lama. Periksa koneksi lalu coba lagi.') }
     catch (error) {
       if (navigator.onLine) throw error
-      const id = crypto.randomUUID()
+      const id = createUuid()
       product = mapProduct({ id, ...productPayload(values, user.id), created_at: new Date().toISOString(), is_favorite: false })
       await enqueueOfflineChange(user.id, 'product:create', { id, values })
       window.dispatchEvent(new Event('diary:offline-queue-changed'))
@@ -91,6 +92,8 @@ export function ProductsProvider({ children }) {
       await enqueueOfflineChange(user.id, 'product:update', { id: productId, values })
       window.dispatchEvent(new Event('diary:offline-queue-changed'))
     }
+    const previousProduct = products.find((item) => item.id === productId)
+    if (product.ratingValue == null && previousProduct?.ratingValue != null) product = { ...product, ratingValue: previousProduct.ratingValue, reviews: previousProduct.reviews }
     if (loadedUserId.current === user.id) setProducts((current) => { const next = current.map((item) => item.id === productId ? product : item); void writeSnapshot(user.id, 'products', next); return next })
     return product
   }, [user])
@@ -113,23 +116,26 @@ export function ProductsProvider({ children }) {
   }, [user])
   const saveReview = useCallback(async (productId, rating, review) => {
     if (!user || !productsApi) throw new Error('Sesi pengguna atau konfigurasi Supabase tidak tersedia.')
-    try { return await withTimeout(productsApi.saveReview(user.id, productId, rating, review), 'Penyimpanan ulasan terlalu lama. Periksa koneksi lalu coba lagi.') }
+    let row
+    try { row = await withTimeout(productsApi.saveReview(user.id, productId, rating, review), 'Penyimpanan ulasan terlalu lama. Periksa koneksi lalu coba lagi.') }
     catch (error) {
       if (navigator.onLine) throw error
-      const row = { user_id: user.id, product_id: productId, rating: Number(rating), review: review?.trim() || null }
+      row = { user_id: user.id, product_id: productId, rating: Number(rating), review: review?.trim() || null }
       await enqueueOfflineChange(user.id, 'product:review', { productId, rating: row.rating, review: row.review })
       window.dispatchEvent(new Event('diary:offline-queue-changed'))
-      return row
     }
+    if (loadedUserId.current === user.id) setProducts((current) => { const next = current.map((item) => item.id === productId ? { ...item, ratingValue: row.rating, reviews: 1 } : item); void writeSnapshot(user.id, 'products', next); return next })
+    return row
   }, [user])
   const deleteReview = useCallback(async (productId) => {
     if (!user || !productsApi) throw new Error('Sesi pengguna atau konfigurasi Supabase tidak tersedia.')
-    try { return await withTimeout(productsApi.deleteReview(user.id, productId), 'Penghapusan ulasan terlalu lama. Periksa koneksi lalu coba lagi.') }
+    try { await withTimeout(productsApi.deleteReview(user.id, productId), 'Penghapusan ulasan terlalu lama. Periksa koneksi lalu coba lagi.') }
     catch (error) {
       if (navigator.onLine) throw error
       await enqueueOfflineChange(user.id, 'product:review-remove', { productId })
       window.dispatchEvent(new Event('diary:offline-queue-changed'))
     }
+    if (loadedUserId.current === user.id) setProducts((current) => { const next = current.map((item) => item.id === productId ? { ...item, ratingValue: null, reviews: 0 } : item); void writeSnapshot(user.id, 'products', next); return next })
   }, [user])
 
   const value = useMemo(() => ({ products, favorites: products.filter((item) => item.isFavorite).map((item) => item.id), loading, error, reload, create, update, remove, getReview, saveReview, deleteReview }), [products, loading, error, reload, create, update, remove, getReview, saveReview, deleteReview])

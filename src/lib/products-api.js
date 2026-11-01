@@ -1,4 +1,5 @@
 import { parseDateKey, validateProductDates } from './expiration.js'
+import { createUuid } from './uuid.js'
 
 const legacyCategory = (type = '', group = 'skincare') => {
   const normalized = type.toLowerCase()
@@ -37,7 +38,8 @@ export function mapProduct(row) {
     accent: '#F3D8D8',
     bottle: bottleFor(row.product_type ?? row.category ?? '', row.category_group ?? 'skincare'),
     rating: '—',
-    reviews: 0,
+    ratingValue: row.rating == null ? null : Number(row.rating),
+    reviews: row.rating == null ? 0 : 1,
     added: row.created_at,
     expiresOn: row.expires_on ?? '',
     openedOn: row.opened_on ?? '',
@@ -119,7 +121,7 @@ export function createProductsApi(client) {
   async function uploadPhoto(userId, photo) {
     if (!photo) return null
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(photo.type) || photo.size > 5 * 1024 * 1024) throw new Error('Foto harus berupa JPG, PNG, WebP, atau GIF dengan ukuran maksimal 5 MB.')
-    const path = `${userId}/${globalThis.crypto.randomUUID()}-${photo.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const path = `${userId}/${createUuid()}-${photo.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const { error } = await client.storage.from('product-images').upload(path, photo, { contentType: photo.type, upsert: false })
     if (error) throw error
     return path
@@ -134,9 +136,12 @@ export function createProductsApi(client) {
   return {
     async list(userId) {
       const rows = await unwrap(client.from('products').select('*').eq('user_id', userId).order('expires_on', { ascending: true, nullsFirst: false }))
-      return rows.map(mapProduct)
+      if (!rows.length) return []
+      const reviews = await unwrap(client.from('product_reviews').select('product_id,rating').eq('user_id', userId))
+      const ratings = new Map(reviews.map((review) => [review.product_id, review.rating]))
+      return rows.map((row) => mapProduct({ ...row, rating: ratings.get(row.id) ?? null }))
     },
-    async create(userId, values, id = globalThis.crypto.randomUUID()) {
+    async create(userId, values, id = createUuid()) {
       const imagePath = await uploadPhoto(userId, values.photo)
       let row
       try { row = await unwrap(client.from('products').insert({ id, ...productPayload(values, userId), image_path: imagePath }).select('*').single()) }

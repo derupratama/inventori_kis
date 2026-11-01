@@ -1,3 +1,5 @@
+import { createUuid } from './uuid.js'
+
 const DB_NAME = 'my-skin-diary-offline'
 const DB_VERSION = 1
 let databasePromise
@@ -29,7 +31,7 @@ async function requestStore(storeName, mode, action) {
 
 export const readSnapshot = (userId, key) => requestStore('snapshots', 'readonly', (store) => store.get(`${userId}:${key}`))
 export const writeSnapshot = (userId, key, value) => requestStore('snapshots', 'readwrite', (store) => store.put(value, `${userId}:${key}`))
-export const enqueueOfflineChange = (userId, type, payload) => requestStore('queue', 'readwrite', (store) => store.put({ id: crypto.randomUUID(), userId, type, payload, createdAt: Date.now() }))
+export const enqueueOfflineChange = (userId, type, payload) => requestStore('queue', 'readwrite', (store) => store.put({ id: createUuid(), userId, type, payload, createdAt: Date.now() }))
 export async function pendingOfflineChanges(userId) {
   const all = await requestStore('queue', 'readonly', (store) => store.getAll())
   return all.filter((entry) => entry.userId === userId).sort((a, b) => a.createdAt - b.createdAt)

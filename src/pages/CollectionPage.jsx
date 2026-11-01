@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Heart, PackageOpen, Plus, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { Heart, PackageOpen, Plus, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge, Button, Card, Input, LoadingSkeleton, useToast } from '../components/index.js'
 import { PageHeading } from '../components/app/PageHeading.jsx'
@@ -22,6 +22,7 @@ const statusLabels = [
   { value: 'no_expiry', label: 'Tanggal belum dicatat' },
 ]
 const productStatusLabels = [{ value: 'all', label: 'Semua status produk' }, { value: 'unused', label: 'Belum digunakan' }, { value: 'in_use', label: 'Sedang digunakan' }, { value: 'finished', label: 'Habis' }, { value: 'expired', label: 'Kedaluwarsa' }]
+const ratingLabels = [{ value: 'all', label: 'Semua rating' }, { value: '9', label: 'Rating 9 ke atas' }, { value: '7', label: 'Rating 7 ke atas' }, { value: '5', label: 'Rating 5 ke atas' }, { value: 'unrated', label: 'Belum diberi rating' }]
 
 export default function CollectionPage() {
   const { products, favorites, loading, error, create, reload } = useProducts()
@@ -32,7 +33,9 @@ export default function CollectionPage() {
   const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [status, setStatus] = useState('all')
   const [productStatus, setProductStatus] = useState(searchParams.get('productStatus') || 'all')
+  const [rating, setRating] = useState('all')
   const [sort, setSort] = useState('expiring-soon')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
   const [isFiltering, setIsFiltering] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -40,7 +43,8 @@ export default function CollectionPage() {
 
   useEffect(() => () => window.clearTimeout(loadingTimer.current), [])
 
-  const visibleProducts = useMemo(() => filterProducts(products, { query, category, favoritesOnly, favorites, status, productStatus, sort }), [products, query, category, favoritesOnly, favorites, status, productStatus, sort])
+  const visibleProducts = useMemo(() => filterProducts(products, { query, category, favoritesOnly, favorites, status, productStatus, rating, sort }), [products, query, category, favoritesOnly, favorites, status, productStatus, rating, sort])
+  const activeFilterCount = Number(category !== 'Semua produk') + Number(favoritesOnly) + Number(status !== 'all') + Number(productStatus !== 'all') + Number(rating !== 'all') + Number(sort !== 'expiring-soon')
 
   function showFilterLoading() {
     setIsFiltering(true)
@@ -75,22 +79,25 @@ export default function CollectionPage() {
       </Card>
 
       <section className="collection-controls" aria-label="Filter koleksi">
-        <div className="collection-controls__search"><Input label="Cari produk" aria-label="Cari produk" placeholder="Nama produk atau brand..." leadingIcon={<Search size={16} />} value={query} onChange={(event) => { setQuery(event.target.value); showFilterLoading() }} /></div>
-        <Button variant={favoritesOnly ? 'secondary' : 'outline'} leadingIcon={<Heart size={15} fill={favoritesOnly ? 'currentColor' : 'none'} />} onClick={() => { setFavoritesOnly((current) => !current); showFilterLoading() }} aria-pressed={favoritesOnly}>Favorit</Button>
+        <Button variant={filtersOpen || activeFilterCount ? 'secondary' : 'outline'} leadingIcon={filtersOpen ? <X size={15} /> : <SlidersHorizontal size={15} />} onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} aria-controls="collection-filter-panel">{filtersOpen ? 'Tutup filter' : `Tambah filter${activeFilterCount ? ` · ${activeFilterCount}` : ''}`}</Button>
       </section>
 
-      <div className="category-tabs" role="group" aria-label="Filter kategori produk">
-        {productCategories.map((item) => <button key={item} type="button" className={`category-tab ${category === item ? 'category-tab--active' : ''}`} onClick={() => { setCategory(item); showFilterLoading() }} aria-pressed={category === item}>{item}</button>)}
-      </div>
-
-      <div className="collection-results">
-        <span>{isFiltering ? 'Memperbarui koleksi…' : `${visibleProducts.length} produk`}</span>
-        <div className="collection-filters-extra">
-          <label className="collection-sort"><span>Status produk</span><select aria-label="Filter status produk" value={productStatus} onChange={(event) => setProductStatus(event.target.value)}>{productStatusLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-          <label className="collection-sort"><span>Status</span><select aria-label="Filter status kedaluwarsa" value={status} onChange={(event) => setStatus(event.target.value)}>{statusLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-          <label className="collection-sort"><SlidersHorizontal size={14} aria-hidden="true" /><span>Urutkan</span><select aria-label="Urutkan produk berdasarkan tanggal kedaluwarsa efektif" value={sort} onChange={(event) => setSort(event.target.value)}>{sortLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+      <section className="collection-filter-panel" id="collection-filter-panel" aria-label="Pilihan filter produk" hidden={!filtersOpen}>
+        <div className="collection-filter-panel__top"><strong>Filter koleksi</strong><Button variant="ghost" size="sm" onClick={() => { setCategory('Semua produk'); setFavoritesOnly(false); setStatus('all'); setProductStatus('all'); setRating('all'); setSort('expiring-soon'); showFilterLoading() }}>Hapus semua</Button></div>
+        <div className="collection-controls__search"><Input label="Cari produk" aria-label="Cari produk" placeholder="Nama produk atau brand..." leadingIcon={<Search size={16} />} value={query} onChange={(event) => { setQuery(event.target.value); showFilterLoading() }} /></div>
+        <div className="category-tabs" role="group" aria-label="Filter kategori produk">
+          {productCategories.map((item) => <button key={item} type="button" className={`category-tab ${category === item ? 'category-tab--active' : ''}`} onClick={() => { setCategory(item); showFilterLoading() }} aria-pressed={category === item}>{item}</button>)}
         </div>
-      </div>
+        <div className="collection-filter-panel__options">
+          <Button variant={favoritesOnly ? 'secondary' : 'outline'} leadingIcon={<Heart size={15} fill={favoritesOnly ? 'currentColor' : 'none'} />} onClick={() => { setFavoritesOnly((current) => !current); showFilterLoading() }} aria-pressed={favoritesOnly}>Favorit</Button>
+          <label className="collection-sort"><span>Rating</span><select aria-label="Filter rating produk" value={rating} onChange={(event) => setRating(event.target.value)}>{ratingLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="collection-sort"><span>Status produk</span><select aria-label="Filter status produk" value={productStatus} onChange={(event) => setProductStatus(event.target.value)}>{productStatusLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="collection-sort"><span>Kedaluwarsa</span><select aria-label="Filter status kedaluwarsa" value={status} onChange={(event) => setStatus(event.target.value)}>{statusLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="collection-sort"><span>Urutkan</span><select aria-label="Urutkan produk berdasarkan tanggal kedaluwarsa efektif" value={sort} onChange={(event) => setSort(event.target.value)}>{sortLabels.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+        </div>
+      </section>
+
+      <div className="collection-results"><span>{isFiltering ? 'Memperbarui koleksi…' : `${visibleProducts.length} produk`}</span></div>
 
       {loading ? (
         <div className="product-grid product-grid--loading" aria-label="Produk sedang dimuat" aria-busy="true">{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton variant="card" key={index} />)}</div>
@@ -101,7 +108,7 @@ export default function CollectionPage() {
           {visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
         </motion.div>
       ) : (
-        <Card className="empty-card collection-empty"><span className="empty-card__icon"><Sparkles size={21} /></span><h2>Belum ada yang cocok.</h2><p>Coba kata kunci atau kategori lain, atau mulai koleksi baru.</p><Button variant="outline" onClick={() => { setQuery(''); setCategory('Semua produk'); setFavoritesOnly(false); setStatus('all'); setProductStatus('all'); showFilterLoading() }}>Hapus filter</Button></Card>
+        <Card className="empty-card collection-empty"><span className="empty-card__icon"><Sparkles size={21} /></span><h2>Belum ada yang cocok.</h2><p>Coba kata kunci atau kategori lain, atau mulai koleksi baru.</p><Button variant="outline" onClick={() => { setQuery(''); setCategory('Semua produk'); setFavoritesOnly(false); setStatus('all'); setProductStatus('all'); setRating('all'); showFilterLoading() }}>Hapus filter</Button></Card>
       )}
 
       {saveError && <p className="auth-message auth-message--error" role="alert">{saveError}</p>}

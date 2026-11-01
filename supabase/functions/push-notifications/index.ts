@@ -47,18 +47,17 @@ function dayDifference(from: string, to: string) {
 }
 
 async function enqueue(log: Record<string, unknown>) {
-  const { data: inserted, error } = await supabase.from('notification_logs').upsert(log, { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true }).select('id').maybeSingle()
+  const { data: inserted, error } = await supabase.from('notification_logs').upsert(log, { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true }).select('id,status').maybeSingle()
   if (error) throw error
   let data = inserted
   if (!data) {
     const { data: existing, error: existingError } = await supabase.from('notification_logs').select('id,status').eq('user_id', log.user_id).eq('dedupe_key', log.dedupe_key).single()
     if (existingError) throw existingError
-    if (existing.status === 'cancelled' || existing.status === 'sent') return existing.id
     data = existing
   }
   const subscriptions = await fetchAll((from, to) => supabase.from('push_subscriptions').select('id').eq('user_id', log.user_id).range(from, to))
   if (!subscriptions?.length) {
-    await supabase.from('notification_logs').update({ status: 'cancelled' }).eq('id', data.id)
+    if (data.status !== 'sent') await supabase.from('notification_logs').update({ status: 'cancelled' }).eq('id', data.id)
     return data.id
   }
   const rows = subscriptions.map(({ id }) => ({ notification_id: data.id, subscription_id: id }))

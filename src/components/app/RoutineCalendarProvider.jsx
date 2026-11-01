@@ -5,6 +5,7 @@ import { createRoutineApi, defaultNotificationPreferences } from '../../lib/rout
 import { supabase } from '../../lib/supabaseClient.js'
 import { withTimeout } from '../../lib/async.js'
 import { enqueueOfflineChange, pendingOfflineChanges, readSnapshot, removeOfflineChange, writeSnapshot } from '../../lib/offline-store.js'
+import { createUuid } from '../../lib/uuid.js'
 
 const RoutineCalendarContext = createContext(null)
 const routineApi = supabase ? createRoutineApi(supabase) : null
@@ -220,7 +221,7 @@ export function RoutineCalendarProvider({ children }) {
     try { row = await withTimeout(routineApi.addSkinNote(user.id, date, note), 'Catatan kulit terlalu lama untuk disimpan. Coba lagi.') }
     catch (error) {
       if (navigator.onLine) throw error
-      row = { id: crypto.randomUUID(), user_id: user.id, activity_type: 'skin_note', activity_date: date, occurred_at: new Date().toISOString(), mood: 'Catatan kulit', notes: note }
+      row = { id: createUuid(), user_id: user.id, activity_type: 'skin_note', activity_date: date, occurred_at: new Date().toISOString(), mood: 'Catatan kulit', notes: note }
       await enqueueOfflineChange(user.id, 'routine:skin-note', { id: row.id, date, note })
       window.dispatchEvent(new Event('diary:offline-queue-changed'))
     }
