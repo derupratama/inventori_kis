@@ -555,6 +555,8 @@
 .routine-reminder__enabled { display: inline-flex; align-items: center; gap: 7px; color: #6D5960; font-size: 10px; }
 .routine-reminder__enabled input { width: 15px; height: 15px; flex: 0 0 auto; accent-color: #B96F7F; }
 .routine-step--complete .routine-step__copy > strong { color: #76666B; text-decoration: line-through; text-decoration-color: #BE929B; }
+.routine-step { position: relative; isolation: isolate; }
+.routine-step--complete::after { position: absolute; z-index: 2; top: 50%; right: 2%; left: 2%; height: 9px; border-radius: 5px; background: rgba(198, 92, 125, .72); clip-path: polygon(0 54%, 12% 22%, 26% 70%, 41% 28%, 56% 72%, 70% 25%, 85% 68%, 100% 32%, 100% 62%, 85% 94%, 70% 51%, 56% 98%, 41% 54%, 26% 96%, 12% 48%, 0 83%); content: ""; transform: rotate(-1deg); pointer-events: none; }
 .calendar-detail__card > .card__content > .calendar-data-warning { margin-top: 12px; }
 .calendar-legend { flex-wrap: wrap; }
 .dashboard-loading { display: grid; gap: 10px; padding: 14px; }
@@ -616,9 +618,19 @@
 .product-photo { aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; border-radius: 20px; background: linear-gradient(145deg, #fff0f3, #f8e7df); }
 .product-photo--makeup { aspect-ratio: 1 / 1; background: linear-gradient(145deg, #f9e8f2, #f7e8df); }
 .product-photo img { width: 100%; height: 100%; object-fit: contain; padding: 12px; }
-.product-art--makeup { background: radial-gradient(ellipse at 50% 35%, rgba(255,255,255,.84), transparent 40%), linear-gradient(145deg, #f9e6f1, #efcfdc); }
-.product-art--makeup .product-bottle__body { border-radius: 9px 9px 16px 16px; }
-.product-art--makeup.product-art--jar .product-bottle__body { width: 88px; height: 70px; border-radius: 14px 14px 20px 20px; }
+.product-art--makeup .product-bottle__cap { order: 0; width: 94px; height: 11px; border-radius: 10px 10px 4px 4px; }
+.product-art--makeup .product-bottle__neck { display: none; }
+.product-art--makeup .product-bottle__body { width: 94px; height: 66px; border-radius: 13px 13px 20px 20px; clip-path: none; background: linear-gradient(100deg, rgba(255,255,255,.48), rgba(255,255,255,.94) 47%, rgba(255,255,255,.5)); box-shadow: inset 0 5px 0 rgba(220,194,198,.5), inset 5px 0 9px rgba(255,255,255,.7), inset -4px 0 8px rgba(190,154,159,.1); }
+.product-art--makeup .product-bottle__brand { max-width: 82px; }
+.product-art--makeup .product-bottle__mark { width: 17px; height: 17px; margin: 3px 0; border-color: #d5a2ad; background: radial-gradient(circle, #f3dce1 0 38%, #fff 42% 56%, #e5bec8 60%); }
+.product-art--makeup .product-bottle__name { max-width: 80px; }
+.product-art--makeup { background: radial-gradient(ellipse at 50% 35%, rgba(255,255,255,.84), transparent 40%), linear-gradient(145deg, #eee8fa, #d9c9ed); }
+.product-art--makeup::before, .product-art--makeup .product-art__orbit { border-color: rgba(255,255,255,.72); }
+.product-art--makeup .product-bottle__body { border-color: rgba(128, 105, 157, .24); background: linear-gradient(100deg, #e8e0f2, #fbf9ff 47%, #ded4ed); box-shadow: inset 0 5px 0 rgba(190,174,212,.52), inset 5px 0 9px rgba(255,255,255,.8), inset -4px 0 8px rgba(151,129,177,.12); }
+.product-art--makeup .product-bottle__brand, .product-art--makeup .product-bottle__size { color: #76648e; }
+.product-art--makeup .product-bottle__name { color: #48395f; }
+.product-art--makeup .product-bottle__mark { border-color: #a58bc7; background: radial-gradient(circle, #d8c9ec 0 38%, #fff 42% 56%, #bda9d8 60%); }
+.product-art--makeup .product-bottle__cap { border-color: rgba(128,105,157,.25); background: linear-gradient(90deg, #d7cce6, #f7f3fc 45%, #cfc1e1); }
 .product-art__category-placeholder { position: absolute; right: 18%; top: 13%; z-index: 1; color: #c6788b; font-size: 25px; }
 .product-review-form { display: grid; gap: 10px; margin-top: 12px; }
 .product-review-form input[type="range"] { accent-color: #d67591; width: 100%; }
@@ -648,8 +660,6 @@
 .summary-error { margin-bottom: 16px; }
 @media (max-width: 700px) { .product-form__row, .usage-summary-columns { grid-template-columns: 1fr; }.usage-summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }.usage-stat { min-height: 122px; padding: 14px; }.usage-stat strong { font-size: 26px; }.routine-name-edit input { font-size: 16px; } }
 .product-photo.product-art--detail { min-height: 340px; height: 100%; border-radius: 25px; }
-.product-art--makeup .product-bottle--tube .product-bottle__body { width: 42px; height: 88px; border-radius: 10px 10px 13px 13px; }
-.product-art--makeup .product-bottle--tube .product-bottle__cap { width: 42px; }
 .product-form select:focus-visible, .product-form textarea:focus-visible, .product-review-form textarea:focus-visible, .routine-name-edit input:focus-visible { outline: 3px solid rgba(213, 116, 145, .24); border-color: #d57c95; }
 .product-form__times input, .routine-every-day input, .routine-active-toggle input { accent-color: #cc6e8b; }
 

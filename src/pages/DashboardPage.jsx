@@ -24,6 +24,15 @@ export default function DashboardPage() {
   const recentActivities = [...activities].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).slice(0, 3)
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'diary'
   const todayLabel = diaryDateLabel(today, { weekday: 'long', day: 'numeric', month: 'long' })
+  const hour = new Date().getHours()
+  const timeGreeting = hour >= 4 && hour < 11 ? 'Selamat pagi' : hour >= 11 && hour < 15 ? 'Selamat siang' : hour >= 15 && hour < 18 ? 'Selamat sore' : 'Selamat malam'
+  const latestMood = [...activities].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).find((activity) => activity.mood)?.mood
+  const greetingContext = diaryLoading ? 'Pelan-pelan saja, setiap langkah kecil untuk kulitmu tetap berarti.'
+    : latestMood ? `Catatan kulit terakhirmu: ${latestMood.toLowerCase()}. Dengarkan kebutuhan kulitmu hari ini.`
+      : morningItems.length > 0 && doneCount === morningItems.length ? 'Rutinitas pagimu sudah tuntas. Semoga kulitmu menikmati perhatian kecil itu.'
+        : morningItems.length > 0 ? 'Satu langkah kecil sudah cukup untuk memulai. Lanjutkan rutinitasmu saat siap.'
+          : products.length > 0 ? 'Koleksi skincare-mu siap menemani ritual kecil hari ini.'
+            : 'Luangkan waktu sejenak untuk dirimu dan kulitmu hari ini.'
   const featuredProducts = products.slice(0, 3)
   const expiryReminders = products.map((product) => ({ product, expiry: getExpiryInfo(product, today) }))
     .filter(({ expiry }) => expiry.status === 'expired' || expiry.status === 'expiring_soon')
@@ -31,7 +40,7 @@ export default function DashboardPage() {
 
   return (
     <main className="page-content">
-      <PageHeading eyebrow={todayLabel} title={<>Selamat pagi, {displayName} <span className="heading-flower">✿</span></>} description="Luangkan waktu sejenak untuk dirimu dan kulitmu hari ini." action={<Button as={Link} to="/calendar" leadingIcon={<Plus size={16} />}>Catat hari ini</Button>} />
+      <PageHeading eyebrow={todayLabel} title={<>{timeGreeting}, {displayName} <span className="heading-flower">✿</span></>} description={greetingContext} action={<Button as={Link} to="/calendar" leadingIcon={<Plus size={16} />}>Catat hari ini</Button>} />
 
       <motion.section className="dashboard-hero" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .3 }}>
         <div className="dashboard-hero__copy"><Badge tone="cream" dot>Perjalanan kecilmu</Badge><h2>Rawat dengan lembut,<br /><em>tumbuh dengan sabar.</em></h2><p>Setiap catatan membantu mengenali apa yang terasa baik untuk kulitmu.</p><Link className="text-link" to="/calendar">Lihat jurnal kulit <ArrowRight size={15} /></Link></div>
