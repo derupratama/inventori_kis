@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { AlertTriangle, ArrowRight, BookHeart, Check, Droplets, Heart, Plus, Sparkles, Sun } from 'lucide-react'
+import { AlertTriangle, ArrowRight, BookHeart, ChevronRight, Droplets, Heart, Moon, Plus, Sparkles, Sun } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Badge, Button, Card, LoadingSkeleton } from '../components/index.js'
 import { ProductCard } from '../components/app/ProductCard.jsx'
@@ -9,18 +9,24 @@ import { StatCard } from '../components/app/StatCard.jsx'
 import { useAuth } from '../components/auth/AuthProvider.jsx'
 import { useProducts } from '../components/app/ProductsProvider.jsx'
 import { useRoutineCalendar } from '../components/app/RoutineCalendarProvider.jsx'
-import { diaryDateKey, diaryDateLabel } from '../lib/diary-date.js'
+import { diaryDateKey, diaryDateLabel, diaryIsoWeekday } from '../lib/diary-date.js'
 import { expiryStatusLabels, getExpiryInfo } from '../lib/expiration.js'
+import { isRoutineItemScheduledOn } from '../lib/routine-schedule.js'
 
 export default function DashboardPage() {
   const { user } = useAuth()
   const { products, loading: productsLoading, error: productsError } = useProducts()
   const { routines, items, completedItemIds, activities, loading: diaryLoading, error: diaryError } = useRoutineCalendar()
   const today = diaryDateKey()
+  const todayWeekday = diaryIsoWeekday(today)
   const morningRoutine = routines.find((routine) => routine.kind === 'morning')
-  const morningItems = items.filter((item) => item.routine_id === morningRoutine?.id).sort((a, b) => a.position - b.position)
+  const morningItems = items.filter((item) => item.routine_id === morningRoutine?.id && isRoutineItemScheduledOn(item, morningRoutine, todayWeekday)).sort((a, b) => a.position - b.position)
   const doneCount = morningItems.filter((item) => completedItemIds.includes(item.id)).length
   const routineProgress = morningItems.length ? Math.round(doneCount / morningItems.length * 100) : 0
+  const eveningRoutine = routines.find((routine) => routine.kind === 'evening')
+  const eveningItems = items.filter((item) => item.routine_id === eveningRoutine?.id && isRoutineItemScheduledOn(item, eveningRoutine, todayWeekday)).sort((a, b) => a.position - b.position)
+  const eveningDoneCount = eveningItems.filter((item) => completedItemIds.includes(item.id)).length
+  const eveningProgress = eveningItems.length ? Math.round(eveningDoneCount / eveningItems.length * 100) : 0
   const recentActivities = [...activities].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)).slice(0, 3)
   const displayName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'diary'
   const todayLabel = diaryDateLabel(today, { weekday: 'long', day: 'numeric', month: 'long' })
@@ -48,19 +54,21 @@ export default function DashboardPage() {
       </motion.section>
 
       <section className="dashboard-stats" aria-label="Ringkasan perjalanan kulit">
-        <StatCard label="Rutinitas pagi" value={diaryLoading ? '…' : `${doneCount}/${morningItems.length}`} detail="langkah selesai hari ini" icon={Check} tone="rose" />
         <StatCard label="Aktivitas kalender" value={diaryLoading ? '…' : activities.length} detail="catatan & langkah bulan ini" icon={Sparkles} tone="cream" />
         <StatCard label="Koleksi produk" value={productsLoading ? '…' : products.length} detail="produk tersimpan" icon={Droplets} tone="muted" />
       </section>
 
-      <div className="dashboard-columns">
-        <section className="dashboard-block">
-          <SectionTitle title="Ritual pagi" description="Pelan-pelan, satu langkah demi satu langkah." action={<Link className="text-link text-link--small" to="/routine">Lihat semua <ArrowRight size={14} /></Link>} />
-          <Card className="routine-card">
-            {diaryLoading ? <div className="dashboard-loading"><LoadingSkeleton variant="line" /><LoadingSkeleton variant="line" /></div> : diaryError ? <div className="dashboard-message" role="alert">{diaryError}</div> : morningRoutine ? <><div className="routine-card__top"><span className="routine-icon"><Sun size={19} aria-hidden="true" /></span><span className="routine-card__time">{morningRoutine.active_days?.length ?? 0} hari aktif</span></div><div className="routine-card__title"><div><h3>{morningRoutine.name}</h3><p>{doneCount} dari {morningItems.length} langkah selesai</p></div><span className="routine-card__progress">{routineProgress}%</span></div><div className="progress-track" role="progressbar" aria-label="Progress rutinitas pagi" aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={morningItems.length || 1}><span style={{ width: `${routineProgress}%` }} /></div><Link to="/routine" className="routine-card__link">Lanjutkan rutinitas <ArrowRight size={15} /></Link></> : <div className="dashboard-message"><p>Rutinitas pagi belum dibuat.</p><Link className="text-link" to="/routine">Buat rutinitas <ArrowRight size={14} /></Link></div>}
-          </Card>
-        </section>
+      <section className="dashboard-routines" aria-label="Rutinitas harian">
+        {[{ kind: 'morning', label: 'Rutinitas pagi', routine: morningRoutine, items: morningItems, done: doneCount, progress: routineProgress, Icon: Sun }, { kind: 'evening', label: 'Rutinitas malam', routine: eveningRoutine, items: eveningItems, done: eveningDoneCount, progress: eveningProgress, Icon: Moon }].map(({ kind, label, routine, items: routineItems, done, progress, Icon }) => <Card className="routine-card" key={kind}>
+          {diaryLoading ? <div className="dashboard-loading"><LoadingSkeleton variant="line" /><LoadingSkeleton variant="line" /></div> : diaryError ? <p className="dashboard-message" role="alert">{diaryError}</p> : <>
+            <div className="routine-card__top"><span className={`routine-icon routine-icon--${kind}`}><Icon size={19} aria-hidden="true" /></span><Link className="routine-card__arrow" to={`/routine?kind=${kind}`} aria-label={`Buka ${label}`}><ChevronRight size={18} /></Link></div>
+            <div className="routine-card__title"><div><h3>{routine?.name ?? label}</h3><p>{routineItems.length ? `${done} dari ${routineItems.length} langkah selesai hari ini` : 'Tidak ada langkah terjadwal hari ini'}</p></div><span className="routine-card__progress">{routineItems.length ? `${progress}%` : '—'}</span></div>
+            <div className="progress-track" role="progressbar" aria-label={`Progres ${label}`} aria-valuenow={routine ? done : 0} aria-valuemin={0} aria-valuemax={routineItems.length || 1}><span style={{ width: `${routine ? progress : 0}%` }} /></div>
+          </>}
+        </Card>)}
+      </section>
 
+      <div className="dashboard-columns">
         <section className="dashboard-block">
           <SectionTitle title="Catatan terbaru" description="Jejak kecil dari perjalananmu." action={<Link className="text-link text-link--small" to="/calendar">Buka kalender <ArrowRight size={14} /></Link>} />
           <Card className="journal-list">

@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
-import { ArrowDown, ArrowUp, CalendarDays, Check, Clock3, Moon, MoreHorizontal, Pencil, Sun, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarDays, Check, Clock3, Moon, Pencil, Sun } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Badge, Button, Card, Modal, useToast } from '../components/index.js'
 import { PageHeading } from '../components/app/PageHeading.jsx'
 import { ProgressRing } from '../components/app/ProgressRing.jsx'
@@ -18,10 +18,9 @@ const routineTabs = [
 const weekdays = [{ n: 1, short: 'Sen', full: 'Senin' }, { n: 2, short: 'Sel', full: 'Selasa' }, { n: 3, short: 'Rab', full: 'Rabu' }, { n: 4, short: 'Kam', full: 'Kamis' }, { n: 5, short: 'Jum', full: 'Jumat' }, { n: 6, short: 'Sab', full: 'Sabtu' }, { n: 7, short: 'Min', full: 'Minggu' }]
 
 export default function DailyRoutinePage() {
-  const [activeKind, setActiveKind] = useState('morning')
-  const [reminderDraft, setReminderDraft] = useState('')
+  const [searchParams] = useSearchParams()
+  const [activeKind, setActiveKind] = useState(() => searchParams.get('kind') === 'evening' ? 'evening' : 'morning')
   const [busyAction, setBusyAction] = useState('')
-  const [manageStepId, setManageStepId] = useState(null)
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [editing, setEditing] = useState(false)
   const [scheduleOpen, setScheduleOpen] = useState(false)
@@ -29,7 +28,7 @@ export default function DailyRoutinePage() {
   const [scheduleDraft, setScheduleDraft] = useState({ morning: {}, evening: {} })
   const [archiveConfirm, setArchiveConfirm] = useState(false)
   const { products, loading: productsLoading } = useProducts()
-  const { routines, items, preferences, completedItemIds, loading, error, reload, createRoutine, updateRoutine, archiveRoutine, updateDays, addItem, updateItemDays, removeItem, moveItem, saveReminder, setCompletion, loadChecklist } = useRoutineCalendar()
+  const { routines, items, completedItemIds, loading, error, reload, createRoutine, updateRoutine, archiveRoutine, updateDays, addItem, updateItemDays, moveItem, setCompletion, loadChecklist } = useRoutineCalendar()
   const { showToast } = useToast()
   const today = diaryDateKey()
   const routine = routines.find((item) => item.kind === activeKind)
@@ -39,15 +38,12 @@ export default function DailyRoutinePage() {
   const completeCount = steps.filter((step) => completedItemIds.includes(step.id)).length
   const progress = steps.length ? Math.round((completeCount / steps.length) * 100) : 0
   const activeToday = isRoutineScheduledOn(routine, diaryIsoWeekday(today))
-  const reminderField = activeKind === 'morning' ? 'morning_reminder_time' : 'evening_reminder_time'
   const allActiveItems = items.filter((item) => isRoutineItemScheduledOn(item, routines.find((entry) => entry.id === item.routine_id), weekday))
   const allDone = allActiveItems.filter((item) => completedItemIds.includes(item.id)).length
   const allProgress = allActiveItems.length ? Math.round(allDone / allActiveItems.length * 100) : 0
 
-  useEffect(() => { setReminderDraft(preferences[reminderField]?.slice(0, 5) ?? (activeKind === 'morning' ? '08:00' : '20:00')) }, [activeKind, preferences, reminderField])
   useEffect(() => { setRoutineNameDraft(routine?.name ?? '') }, [routine?.id, routine?.name])
   useEffect(() => { setEditing(false) }, [activeKind, routine?.id])
-  useEffect(() => { setManageStepId(null) }, [activeKind, editing])
   useEffect(() => { void loadChecklist(today).catch((loadError) => showToast(loadError.message || 'Checklist gagal dimuat.', { tone: 'error' })) }, [today, loadChecklist, showToast])
 
   async function perform(action, task, successMessage) {
@@ -124,22 +120,13 @@ export default function DailyRoutinePage() {
     void perform(`step-${step.id}`, () => setCompletion(step.id, checked, today), checked ? `${step.label} ditandai selesai.` : `${step.label} belum ditandai selesai.`)
   }
 
-  function handleSaveReminder() {
-    void perform('reminder', () => saveReminder(activeKind, reminderDraft, preferences[reminderField]), 'Pengaturan pengingat tersimpan.')
-  }
-
-  function handleReminderEnabled(event) {
-    const enabled = event.target.checked
-    void perform('reminder', () => saveReminder(activeKind, reminderDraft, enabled), enabled ? 'Pengingat diaktifkan.' : 'Pengingat dinonaktifkan.')
-  }
-
   return (
     <main className="page-content">
       <PageHeading eyebrow="Kebiasaan yang terasa baik" title="Daily Routine" description="Pilih produk untuk setiap hari, lalu tandai pemakaiannya di checklist hari ini." action={<div className="routine-page-heading-actions"><Button variant="primary" leadingIcon={<CalendarDays size={15} />} onClick={openScheduleEditor}>Atur Produk & Hari</Button><Badge tone="cream" dot>{diaryDateLabel(today, { day: 'numeric', month: 'long' })}</Badge></div>} />
 
       <Card className="routine-overview">
         <div className="routine-overview__copy"><span className="routine-overview__eyebrow"><Check size={14} aria-hidden="true" /> PROGRES HARI INI</span><h2>{allDone} dari {allActiveItems.length} langkah selesai</h2><p>Progress tersimpan per tanggal kalender Asia/Jakarta.</p></div>
-        <div className="routine-progress-copy"><span>{allProgress}%</span><ProgressRing value={allProgress} size={58} label="Progress semua rutinitas aktif hari ini" /></div>
+        <div className="routine-progress-copy"><ProgressRing value={allProgress} size={72} label="Progress semua rutinitas aktif hari ini" /></div>
       </Card>
 
       <div className="routine-page-layout">
@@ -155,13 +142,14 @@ export default function DailyRoutinePage() {
           ) : (
             <motion.div key={activeKind} initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .18 }}>
               <Card className={`routine-checklist-card ${editing ? 'routine-checklist-card--editing' : ''}`}>
-                <div className="routine-checklist-card__header"><div><p className="page-eyebrow">RITUAL {activeKind === 'morning' ? 'PAGI' : 'MALAM'}</p>{editing ? <div className="routine-name-edit"><input aria-label="Nama rutinitas" value={routineNameDraft} maxLength={80} onChange={(event) => setRoutineNameDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); handleSaveRoutineName() } }} /><Button variant="outline" size="sm" onClick={handleSaveRoutineName} disabled={Boolean(busyAction) || !routineNameDraft.trim() || routineNameDraft.trim() === routine.name}>Simpan nama</Button></div> : <h2>{routine.name}</h2>}<Badge tone={activeToday ? 'cream' : 'neutral'}><Clock3 size={12} /> {activeToday ? `${completeCount}/${steps.length} selesai` : 'Tidak dijadwalkan hari ini'}</Badge></div><div className="routine-checklist-card__actions"><ProgressRing value={activeToday ? progress : 0} size={58} label={`Progress rutinitas ${routine.name}`} /><Button variant={editing ? 'secondary' : 'outline'} size="sm" leadingIcon={<Pencil size={14} />} aria-pressed={editing} onClick={() => setEditing((value) => !value)}>{editing ? 'Selesai mengelola' : 'Kelola langkah'}</Button></div></div>
-                {editing && <label className="routine-active-toggle"><input type="checkbox" checked={routine.is_active !== false} disabled={Boolean(busyAction)} onChange={(event) => void perform('routine-active', () => updateRoutine(routine.id, { is_active: event.target.checked }), event.target.checked ? 'Rutinitas diaktifkan.' : 'Rutinitas dinonaktifkan.')} /> Rutinitas aktif</label>}
-                {activeToday ? <><div className="routine-progress-copy"><span>{completeCount} dari {steps.length} langkah selesai hari ini</span><strong>{progress}%</strong></div><div className="progress-track" role="progressbar" aria-label={`Progress rutinitas ${routine.name}`} aria-valuenow={completeCount} aria-valuemin={0} aria-valuemax={steps.length || 1}><span style={{ width: `${progress}%` }} /></div></> : <div className="routine-today-empty"><span aria-hidden="true">✿</span><p>Checklist {activeKind === 'morning' ? 'pagi' : 'malam'} hanya ditampilkan pada hari jadwalnya.</p>{!editing && <Button size="sm" variant="outline" leadingIcon={<Pencil size={13} />} onClick={openScheduleEditor}>Edit Rutinitas</Button>}</div>}
+                <div className="routine-checklist-card__header"><div><p className="page-eyebrow">RITUAL {activeKind === 'morning' ? 'PAGI' : 'MALAM'}</p>{editing ? <div className="routine-name-edit"><input aria-label="Nama rutinitas" value={routineNameDraft} maxLength={80} onChange={(event) => setRoutineNameDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); handleSaveRoutineName() } }} /><Button variant="outline" size="sm" onClick={handleSaveRoutineName} disabled={Boolean(busyAction) || !routineNameDraft.trim() || routineNameDraft.trim() === routine.name}>Simpan nama</Button></div> : <h2>{routine.name}</h2>}<Badge tone={activeToday ? 'cream' : 'neutral'}><Clock3 size={12} /> {activeToday ? `${completeCount}/${steps.length} selesai` : 'Tidak dijadwalkan hari ini'}</Badge></div><div className="routine-checklist-card__actions"><Button variant={editing ? 'secondary' : 'outline'} size="sm" leadingIcon={<Pencil size={14} />} aria-pressed={editing} onClick={() => setEditing((value) => !value)}>{editing ? 'Selesai mengelola' : 'Kelola langkah'}</Button></div></div>
+                {activeToday && <div className="routine-progress-copy"><span>{completeCount} dari {steps.length} langkah selesai hari ini</span></div>}
+                {!activeToday && <div className="routine-today-empty"><span aria-hidden="true">✿</span><p>Checklist {activeKind === 'morning' ? 'pagi' : 'malam'} hanya ditampilkan pada hari jadwalnya.</p>{!editing && <Button size="sm" variant="outline" leadingIcon={<Pencil size={13} />} onClick={openScheduleEditor}>Edit Rutinitas</Button>}</div>}
                 <div className="routine-steps">
-                  {activeToday && steps.length ? steps.map((step, index) => {
+                  {(activeToday || editing) && (editing ? routineSteps : steps).length ? (editing ? routineSteps : steps).map((step, index) => {
                     const product = products.find((item) => item.id === step.product_id)
                     const checked = completedItemIds.includes(step.id)
+                    const routinePosition = routineSteps.findIndex((item) => item.id === step.id)
                     return (
                       <motion.div layout className={`routine-step ${checked ? 'routine-step--complete' : ''}`} key={step.id} animate={{ backgroundColor: checked ? 'rgba(252, 228, 232, .36)' : 'rgba(255, 255, 255, 0)' }} transition={{ duration: .2 }}>
                         <label className="routine-step__check" aria-label={`${checked ? 'Tandai belum selesai' : 'Tandai selesai'}: ${step.label}`}>
@@ -170,17 +158,13 @@ export default function DailyRoutinePage() {
                         </label>
                         <span className="routine-step__number">{String(index + 1).padStart(2, '0')}</span>
                         <div className="routine-step__copy"><strong>{product ? <Link to={`/collection/${product.id}`}>{step.label}</Link> : step.label}</strong><p>{step.instructions || 'Gunakan sesuai petunjuk pada produk.'}</p></div>
-                        {editing && <div className="routine-step__manage"><Button variant="ghost" size="icon" aria-label={`Aksi untuk ${step.label}`} aria-expanded={manageStepId === step.id} onClick={() => setManageStepId((current) => current === step.id ? null : step.id)}><MoreHorizontal size={17} /></Button>{manageStepId === step.id && <div className="routine-step__manage-menu" role="group" aria-label={`Kelola langkah ${step.label}`}><Button variant="ghost" size="sm" leadingIcon={<ArrowUp size={14} />} disabled={index === 0 || Boolean(busyAction)} onClick={() => { setManageStepId(null); void perform('order', () => moveItem(routine.id, step.id, -1)) }}>Naikkan</Button><Button variant="ghost" size="sm" leadingIcon={<ArrowDown size={14} />} disabled={index === steps.length - 1 || Boolean(busyAction)} onClick={() => { setManageStepId(null); void perform('order', () => moveItem(routine.id, step.id, 1)) }}>Turunkan</Button><Button variant="ghost" size="sm" leadingIcon={<Trash2 size={14} />} disabled={Boolean(busyAction)} onClick={() => { setManageStepId(null); void perform('remove', () => removeItem(step.id), `${step.label} dihapus dari rutinitas.`) }}>Hapus langkah</Button></div>}</div>}
+                        {editing && <div className="routine-step__manage" aria-label={`Atur urutan ${step.label}`}><Button variant="outline" size="sm" leadingIcon={<ArrowUp size={13} />} aria-label={`Naikkan ${step.label}`} disabled={routinePosition === 0 || Boolean(busyAction)} onClick={() => void perform('order', () => moveItem(routine.id, step.id, -1))}>Naikkan</Button><Button variant="outline" size="sm" leadingIcon={<ArrowDown size={13} />} aria-label={`Turunkan ${step.label}`} disabled={routinePosition === routineSteps.length - 1 || Boolean(busyAction)} onClick={() => void perform('order', () => moveItem(routine.id, step.id, 1))}>Turunkan</Button></div>}
                       </motion.div>
                     )
                   }) : activeToday ? <div className="routine-no-items"><p>Belum ada produk di rutinitas ini.</p>{products.length === 0 && <Link to="/collection">Tambahkan produk ke koleksi</Link>}</div> : null}
                 </div>
               </Card>
 
-              {editing && <Card className="routine-schedule-card">
-                <div className="routine-schedule-card__heading"><div><h3>Pengingat rutinitas</h3><p>Atur jam notifikasi untuk rutinitas {activeKind === 'morning' ? 'pagi' : 'malam'}.</p></div><span className="routine-schedule-card__timezone">Asia/Jakarta</span></div>
-                <div className="routine-reminder"><label htmlFor="routine-reminder-time">Jam pengingat</label><div><input id="routine-reminder-time" type="time" value={reminderDraft} disabled={Boolean(busyAction)} onChange={(event) => setReminderDraft(event.target.value)} /><Button size="sm" variant="outline" loading={busyAction === 'reminder'} disabled={Boolean(busyAction) || (reminderDraft === preferences[reminderField]?.slice(0, 5) && Boolean(preferences[activeKind === 'morning' ? 'daily_routine_enabled' : 'evening_reminder_enabled']))} onClick={handleSaveReminder}>Simpan jam</Button></div><label className="routine-reminder__enabled"><input type="checkbox" checked={Boolean(preferences[activeKind === 'morning' ? 'daily_routine_enabled' : 'evening_reminder_enabled'])} disabled={Boolean(busyAction)} onChange={handleReminderEnabled} /> Aktifkan pengingat {activeKind === 'morning' ? 'pagi' : 'malam'}</label></div>
-              </Card>}
             </motion.div>
           )}
         </section>

@@ -35,6 +35,7 @@
 .dashboard-hero__flower { position: absolute; top: 48%; right: 34%; color: #C98291; font-size: 50px; filter: drop-shadow(0 6px 9px rgba(114, 67, 79, .14)); transform: translateY(-50%); }
 .dashboard-hero__leaf { position: absolute; top: 24%; right: 16%; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #93636C; background: #FFF8F7; }
 .dashboard-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 15px; }
+.dashboard-routines { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 18px; }
 .stat-card { min-width: 0; border-radius: 18px; }
 .stat-card .card__content { display: flex; min-height: 95px; align-items: flex-start; gap: 10px; padding: 14px 12px; }
 .stat-card__icon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 12px; color: #78505A; }
@@ -52,6 +53,9 @@
 .routine-card__top { display: flex; align-items: center; justify-content: space-between; }
 .routine-icon { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 14px; color: #7A515C; background: var(--color-cream); }
 .routine-card__time { color: #78666B; font-size: 10px; }
+.routine-card__arrow { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #F0DADF; border-radius: 50%; color: #78535C; background: #FFF9FA; transition: transform .16s ease, background .16s ease; }
+.routine-card__arrow:hover { transform: translateX(2px); background: #FCE4E8; }
+.routine-icon--evening { background: #F1EAF8; }
 .routine-card__title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 12px; }
 .routine-card__title h3 { margin: 0; color: var(--color-text); font-family: Georgia, serif; font-size: 17px; font-weight: 400; }
 .routine-card__title p { margin: 5px 0 0; color: var(--color-muted); font-size: 10px; }
@@ -252,7 +256,7 @@
 
 /* Daily routine */
 .routine-overview { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; overflow: hidden; padding: 17px; border-color: #F1DFDF; background: linear-gradient(110deg, #FFFDFD, #FFF0E6); }
-.routine-overview__copy { position: relative; z-index: 1; }
+.routine-overview__copy { position: relative; z-index: 1; min-width: 0; flex: 1 1 auto; }
 .routine-overview__eyebrow { display: inline-flex; align-items: center; gap: 6px; color: #835A64; font-size: 8px; font-weight: 700; letter-spacing: .12em; }
 .routine-overview h2 { margin: 9px 0 5px; color: var(--color-text); font-family: Georgia, serif; font-size: 20px; font-weight: 400; }
 .routine-overview p { max-width: 420px; margin: 0; color: #6C585F; font-size: 10px; line-height: 1.55; }
@@ -272,6 +276,7 @@
 .routine-checklist-card__header h2 { margin: 0; color: var(--color-text); font-family: Georgia, serif; font-size: 19px; font-weight: 400; }
 .routine-checklist-card__header .badge { min-height: 25px; font-size: 9px; }
 .routine-progress-copy { display: flex; justify-content: space-between; margin: 17px 0 7px; color: #756168; font-size: 9px; }
+.routine-checklist-card .routine-progress-copy { margin-bottom: 0; }
 .routine-progress-copy strong { color: #674952; font-weight: 650; }
 .routine-steps { margin-top: 10px; }
 .routine-step { display: flex; min-height: 69px; align-items: center; gap: 9px; border-bottom: 1px solid #F3EAEA; transition: opacity .18s; }
@@ -398,7 +403,8 @@
   .push-reminder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .push-reminder-card:last-child { grid-column: 1 / -1; }
   .push-reminder-card__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .dashboard-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .dashboard-routines { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .stat-card .card__content { min-height: 102px; align-items: center; gap: 12px; padding: 15px; }
   .stat-card__icon { width: 39px; height: 39px; }
   .product-grid, .product-grid--dashboard { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -420,7 +426,7 @@
   .dashboard-hero__illustration { width: 37%; }
   .dashboard-hero__sun { right: 18%; width: 120px; height: 120px; }
   .dashboard-hero__flower { right: 35%; font-size: 64px; }
-  .dashboard-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .dashboard-columns { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .product-grid--dashboard { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .product-art { height: 188px; }
   .calendar-layout { grid-template-columns: minmax(0, 1.45fr) minmax(250px, .85fr); gap: 16px; }
@@ -521,16 +527,14 @@
 .calendar-activity__delete:hover:not(:disabled) { color: #8b354d; background: #fff0f3; }
 .calendar-activity__delete:focus-visible { outline: 3px solid rgba(213, 116, 145, .25); outline-offset: 1px; }
 .calendar-data-warning { margin: 12px 0 0; color: #76564D; font-size: 10px; line-height: 1.5; }
-.routine-overview > .routine-progress-copy { display: flex; align-items: center; gap: 10px; margin: 0; color: #674952; font-family: Georgia, serif; font-size: 17px; }
+.routine-overview > .routine-progress-copy { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 0; margin: 0 0 0 auto; color: #674952; font-family: Georgia, serif; font-size: 17px; }
 .routine-empty .empty-card__icon { color: #79535D; }
 .routine-step__copy > strong { color: #49363C; font-size: 10px; font-weight: 650; }
 .routine-step__copy > strong a { color: inherit; }
 .routine-step__copy > strong a:hover { color: #85535F; }
 .routine-step__manage { position: relative; display: flex; flex: 0 0 auto; }
-.routine-step__manage > .button--icon { width: 34px; min-width: 34px; height: 34px; color: #735A61; }
-.routine-step__manage-menu { position: absolute; z-index: 12; top: calc(100% + 3px); right: 0; display: grid; width: 158px; gap: 2px; padding: 5px; border: 1px solid #F0DEDF; border-radius: 13px; background: #FFFFFF; box-shadow: 0 9px 24px rgba(73, 54, 60, .15); }
-.routine-step__manage-menu .button { min-height: 36px; justify-content: flex-start; padding: 0 10px; border-radius: 9px; font-size: 10px; }
-.routine-step__manage-menu .button:last-child { color: #9C5364; }
+.routine-step__manage { align-items: center; gap: 5px; }
+.routine-step__manage .button { min-height: 31px; justify-content: center; gap: 4px; padding: 0 7px; color: #735A61; font-size: 9px; white-space: nowrap; }
 .routine-step__check input:disabled { cursor: not-allowed; }
 .routine-step__check:has(input:disabled) { cursor: not-allowed; opacity: .55; }
 .routine-no-items { padding: 16px 8px; color: #756168; font-size: 10px; }
@@ -554,7 +558,7 @@
 .routine-reminder input { flex: 0 0 120px; }
 .routine-reminder__enabled { display: inline-flex; align-items: center; gap: 7px; color: #6D5960; font-size: 10px; }
 .routine-reminder__enabled input { width: 15px; height: 15px; flex: 0 0 auto; accent-color: #B96F7F; }
-.routine-step--complete .routine-step__copy > strong { color: #76666B; text-decoration: line-through; text-decoration-color: #BE929B; }
+.routine-step--complete .routine-step__copy > strong { color: #76666B; text-decoration: none; }
 .routine-step { position: relative; isolation: isolate; }
 .routine-step--complete::after { position: absolute; z-index: 2; top: 50%; right: 2%; left: 2%; height: 9px; border-radius: 5px; background: rgba(198, 92, 125, .72); clip-path: polygon(0 54%, 12% 22%, 26% 70%, 41% 28%, 56% 72%, 70% 25%, 85% 68%, 100% 32%, 100% 62%, 85% 94%, 70% 51%, 56% 98%, 41% 54%, 26% 96%, 12% 48%, 0 83%); content: ""; transform: rotate(-1deg); pointer-events: none; }
 .calendar-detail__card > .card__content > .calendar-data-warning { margin-top: 12px; }
@@ -593,7 +597,7 @@
   .calendar-view-toggle { margin-right: auto; }
   .routine-step { gap: 5px; }
   .routine-step__number { display: none; }
-  .routine-step__manage .button--icon { width: 25px; min-width: 25px; }
+  .routine-step__manage .button { min-height: 29px; padding: 0 5px; font-size: 8px; }
   .routine-add-product > div { align-items: stretch; flex-direction: column; }
 }
 
@@ -653,9 +657,20 @@
 .summary-positive { color: #9e5670; background: #fff3f6; border-radius: 12px; padding: 10px 12px; }
 .usage-history-card__sparkle { font-size: 29px; color: #c66d8b; }
 .usage-week-chart { height: 125px; display: flex; align-items: end; justify-content: space-around; gap: 10px; padding: 10px 4px; }
-.usage-week-chart > div { height: 100%; flex: 1; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 6px; }
-.usage-week-chart > div > span { width: min(30px, 75%); min-height: 5px; border-radius: 8px 8px 3px 3px; background: linear-gradient(#e99db1, #cc6e8b); }
+.usage-week-chart > button { height: 100%; min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 5px; padding: 5px 2px; border: 1px solid transparent; border-radius: 11px; color: inherit; background: transparent; cursor: pointer; }
+.usage-week-chart > button > span { width: min(30px, 75%); min-height: 5px; border-radius: 8px 8px 3px 3px; background: linear-gradient(#e99db1, #cc6e8b); }
 .usage-week-chart small { color: #76616a; font-size: 10px; }
+.usage-week-day--selected { border-color: #efd5dd !important; background: #fff5f7 !important; }
+.usage-week-navigation { display: grid; grid-template-columns: 35px 1fr 35px; align-items: center; gap: 8px; margin-top: 13px; }
+.usage-week-navigation button { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #efdee2; border-radius: 10px; color: #775963; background: #fffafa; cursor: pointer; }
+.usage-week-navigation button:disabled { opacity: .4; cursor: not-allowed; }
+.usage-week-navigation strong { color: #69545b; font-size: 11px; text-align: center; }
+.usage-week-routines { display: grid; gap: 7px; margin: 6px 0 12px; padding: 12px; border-radius: 14px; background: #fff8f9; }
+.usage-week-routines h3 { margin: 0 0 2px; color: #644d55; font-family: Georgia, serif; font-size: 14px; font-weight: 400; }
+.usage-week-routine { display: grid; grid-template-columns: 50px 1fr 20px; align-items: center; gap: 6px; color: #6e5b61; font-size: 10px; }
+.usage-week-routine strong { color: #503d44; }
+.usage-week-routine i { display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; color: #9b6474; background: #f5e3e8; font-style: normal; }
+.usage-week-routine i.usage-week-routine__complete { color: #fff; background: #9b6474; }
 .usage-feature-card { min-height: 155px; background: linear-gradient(135deg, #fff8fa, #fff); }
 .summary-error { margin-bottom: 16px; }
 @media (max-width: 700px) { .product-form__row, .usage-summary-columns { grid-template-columns: 1fr; }.usage-summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }.usage-stat { min-height: 122px; padding: 14px; }.usage-stat strong { font-size: 26px; }.routine-name-edit input { font-size: 16px; } }
@@ -713,18 +728,25 @@
   .routine-page-heading-actions { width: 100%; align-items: center; justify-content: space-between; flex-direction: row; gap: 8px; }
   .routine-page-heading-actions .button { min-height: 40px; padding: 0 13px; font-size: 11px; }
   .routine-overview { flex-wrap: nowrap; gap: 10px; padding: 14px; }
-  .routine-overview h2 { font-size: 17px; }
+  .routine-overview h2 { font-size: 16px; line-height: 1.2; }
   .routine-overview p { display: none; }
+  .routine-overview > .routine-progress-copy .progress-ring { width: 66px !important; height: 66px !important; font-size: 12px; }
   .routine-tabs { gap: 6px; margin-bottom: 10px; }
   .routine-tab { min-height: 44px; font-size: 11px; }
   .routine-checklist-card .card__content { padding: 14px; }
   .routine-checklist-card__header { align-items: center; gap: 8px; }
+  .routine-checklist-card--editing .routine-checklist-card__header { align-items: stretch; flex-direction: column; }
   .routine-checklist-card__header > div { min-width: 0; flex: 1; }
+  .routine-checklist-card--editing .routine-checklist-card__header > div { width: 100%; }
+  .routine-checklist-card--editing .routine-name-edit { width: 100%; align-items: stretch; flex-direction: column; }
+  .routine-checklist-card--editing .routine-name-edit input { width: 100%; max-width: none; min-width: 0; flex: 1; }
+  .routine-checklist-card--editing .routine-name-edit .button { align-self: flex-start; }
   .routine-checklist-card__header h2 { font-size: 18px; }
   .routine-checklist-card__header .badge { min-height: 23px; padding: 0 8px; font-size: 8px; }
   .routine-checklist-card__actions { flex: 0 0 auto; gap: 0; }
+  .routine-checklist-card--editing .routine-checklist-card__actions { display: flex; justify-content: flex-start; }
   .routine-checklist-card__actions .progress-ring { display: none; }
-  .routine-checklist-card__actions .button { min-width: 0; min-height: 36px; padding: 0 10px; border-radius: 12px; font-size: 9px; }
+  .routine-checklist-card__actions .button { min-width: 0; min-height: 32px; margin: 2px 0 0; padding: 0 8px; border-radius: 11px; font-size: 8px; }
   .routine-step { min-height: 72px; gap: 7px; padding: 7px 2px; }
   .routine-step__number { display: none; }
   .routine-step__check { width: 38px; height: 38px; }
@@ -767,8 +789,11 @@
 .routine-schedule-product--selected .routine-schedule-product__check { border-color: #ca6e8a; background: #ca6e8a; }
 .routine-schedule-modal__empty { margin: 0; padding: 15px; border: 1px dashed #e8c9d2; border-radius: 12px; color: #826c74; background: #fff9fb; font-size: 11px; line-height: 1.5; }
 @media (max-width: 640px) {
-  .routine-checklist-card__actions { align-items: flex-end; flex-direction: column; gap: 7px; }
-  .routine-checklist-card__actions .button { min-width: 132px; min-height: 36px; }
+  .routine-checklist-card__header { align-items: flex-start; }
+  .routine-checklist-card__actions { align-items: flex-end; flex-direction: column; gap: 5px; margin-left: auto; padding-left: 8px; }
+  .routine-checklist-card__actions .progress-ring { display: inline-grid; width: 54px !important; height: 54px !important; font-size: 10px; }
+  .routine-checklist-card__actions .button { min-width: 0; min-height: 31px; margin: 2px 0 0 8px; padding: 0 8px; border-radius: 10px; font-size: 8px; white-space: nowrap; }
+  .routine-checklist-card--editing .routine-checklist-card__actions { width: 100%; align-items: flex-end; flex-direction: row; justify-content: flex-end; }
   .routine-schedule-modal__day-picker { gap: 5px; }
   .routine-schedule-modal__day-picker button { min-height: 39px; padding: 2px; font-size: 10px; }
   .routine-schedule-modal__products { max-height: 210px; }
